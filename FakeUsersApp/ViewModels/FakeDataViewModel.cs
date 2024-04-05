@@ -5,7 +5,7 @@ namespace FakeUsersApp.Models
 {
     public class FakeDataViewModel
     {
-        public FakeDataGenerator FakeData { get; set; } =new FakeDataGenerator();
+      
         public Country SelectedCountry { get; set; }
         public int Seed { get; set; }
         public double ErrorProbability { get; set; }

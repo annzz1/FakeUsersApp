@@ -29,7 +29,8 @@ namespace FakeUsersApp.Controllers
         [HttpPost]
         public IActionResult Index(FakeDataViewModel viewModel)
         {
-            var fakeUserInfos = viewModel.FakeData.GenerateData((Country)viewModel.SelectedCountry, 20, viewModel.Seed, viewModel.ErrorPerRecord/100);
+            var FakeData = new FakeDataGenerator();
+            var fakeUserInfos = FakeData.GenerateData((Country)viewModel.SelectedCountry, 20, viewModel.Seed, viewModel.ErrorPerRecord/100);
            
             viewModel.FakePeople = fakeUserInfos;
             
@@ -39,15 +40,15 @@ namespace FakeUsersApp.Controllers
         public PartialViewResult LoadMoreData(FakeDataViewModel viewModel, int page)
         {
            
-            int pageSize = 20; 
-
-            var fakeUserInfos = viewModel.FakeData.GenerateData((Country)viewModel.SelectedCountry, 10, viewModel.Seed, viewModel.ErrorPerRecord/100);
+            int pageSize = 10;
+            var FakeData = new FakeDataGenerator();
+            var fakeUserInfos = FakeData.GenerateData((Country)viewModel.SelectedCountry, 10, viewModel.Seed, viewModel.ErrorPerRecord/100);
             viewModel.FakePeople.AddRange(fakeUserInfos);
 
-            int startIndex = (page - 1) * pageSize;
+            int startIndex = (page - 1) *pageSize;
             int endIndex = startIndex + pageSize;
 
-            var partialData = viewModel.FakePeople.Skip(startIndex).Take(pageSize).ToList();
+            var partialData = viewModel.FakePeople.Skip(endIndex).Take(pageSize).ToList();
             ViewBag.CurrentPage = page;
             return PartialView("_FakeTabledata", partialData);
         }
