@@ -1,0 +1,165 @@
+﻿@model FakeUsersApp.Models.FakeDataViewModel
+
+@{
+    ViewData["Title"] = "Home";
+}
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { @class = "d-flex align-items-center space-between", id = "generateForm" }))
+{
+    <div class="form-group">
+        @Html.DropDownListFor(m => m.SelectedCountry, new SelectList(Enum.GetValues(typeof(FakeUsersApp.Enums.Country))), new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        <input type="text" id="Seed" name="Seed" class="form-control" value="@Model.Seed" /> <!-- Make the Seed input editable -->
+        @Html.HiddenFor(m => m.Seed)
+    </div>
+    <div class="form-group">
+        <button type="button" class="btn btn-secondary ml-2" onclick="generateSeed()">Generate Seed</button>
+    </div>
+    <div class="form-group">
+        <input type="range" class="form-control-range" id="errorProbabilitySlider" min="0" max="10" value="@Model.ErrorProbability" />
+    </div>
+    <div class="form-group">
+        @Html.TextBoxFor(m => m.ErrorPerRecord, new { @class = "form-control form-control-sm mr-2", type = "number", step = "0.01",min = "0", max = "1000" })
+    </div>
+
+    <button type="submit" class="btn btn-primary ml-2">Submit</button>
+    <div class="form-group">
+        <button id="exportToCSV" type="button" class="btn btn-primary">Export to CSV</button>
+    </div>
+}
+
+
+
+
+
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Last Name</th>
+            <th>Phone Number</th>
+            <th>Address</th>
+            <th>Zip Code</th>
+        </tr>
+    </thead>
+    <tbody>
+    <tbody id="fakeUserDataTableBody">
+     @Html.Partial("_FakeTabledata", Model.FakePeople)
+    </tbody>
+        
+   
+</table>
+@section Scripts {
+    <script>
+        window.onload = function () {
+            document.getElementById("GeneratedSeed").value = document.getElementById("Seed").value;
+        };
+
+        function generateSeed() {
+            var seed = Math.floor(Math.random() * 100000);
+            document.getElementById("Seed").value = seed;
+        }
+        $(document).ready(function () {
+            
+            var errorProbabilitySlider = $("#errorProbabilitySlider");
+            var errorPerRecordField = $("#ErrorPerRecord");
+
+            errorProbabilitySlider.on("input", function () {
+                errorPerRecordField.val(this.value * 100);
+            });
+
+            errorPerRecordField.on("input", function () {
+                errorProbabilitySlider.val(this.value / 100);
+            });
+        });
+
+        var isLoading = false;
+        var currentPage = 1;
+
+        $(window).scroll(function () {
+            if (($(window).scrollTop() >= $(document).height() - $(window).height() - 100) && !isLoading) {
+                isLoading = true;
+                currentPage++;
+
+                var fakePeopleArray = [];
+
+                
+                $("#fakeUserDataTableBody tr").each(function () {
+                    var fakePerson = {
+                        Index: $(this).find('td:eq(0)').text(),
+                        Id: $(this).find('td:eq(1)').text(),
+                        FirstName: $(this).find('td:eq(2)').text(),
+                        MiddleName: $(this).find('td:eq(3)').text(),
+                        LastName: $(this).find('td:eq(4)').text(),
+                        PhoneNumber: $(this).find('td:eq(5)').text(),
+                        
+                    };
+                    fakePeopleArray.push(fakePerson);
+                });
+
+                var viewModel = {
+                    SelectedCountry: $("#SelectedCountry").val(),
+                    Seed: $("#Seed").val(),
+                    ErrorPerRecord: $("#ErrorPerRecord").val(),
+                    FakePeople: fakePeopleArray
+                };
+
+                $.ajax({
+                    url: "@Url.Action("LoadMoreData")",
+                    type: "POST",
+                    data: { viewModel: viewModel, page: currentPage },
+                    success: function (data) {
+                        if (data) {
+                            $("#fakeUserDataTableBody").append(data);
+                        }
+                        isLoading = false;
+                    }
+                });
+            }
+        });
+        $("#exportToCSV").click(function () {
+            var fakePeopleArray = [];
+
+            
+            $("#fakeUserDataTableBody tr").each(function () {
+                var fakePerson = {
+                    Index: $(this).find('td:eq(0)').text(),
+                    Id: $(this).find('td:eq(1)').text(),
+                    FirstName: $(this).find('td:eq(2)').text(),
+                    MiddleName: $(this).find('td:eq(3)').text(),
+                    LastName: $(this).find('td:eq(4)').text(),
+                    PhoneNumber: $(this).find('td:eq(5)').text(),
+                    
+                };
+                fakePeopleArray.push(fakePerson);
+            });
+
+            var viewModel = {
+                SelectedCountry: $("#SelectedCountry").val(),
+                Seed: $("#Seed").val(),
+                ErrorPerRecord: $("#ErrorPerRecord").val(),
+                FakePeople: fakePeopleArray
+            };
+
+            $.ajax({
+                url: "@Url.Action("ExportToCSV", "Home")",
+                type: "POST",
+                data: { viewModel: viewModel },
+                success: function (data) {
+                    var downloadLink = document.createElement('a');
+                    downloadLink.href = URL.createObjectURL(new Blob([data], { type: 'text/csv' }));
+                    downloadLink.download = 'FakeUsers.csv';
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                }
+            });
+        });
+
+    </script>
+}

@@ -1,0 +1,27 @@
+﻿@model List<PersonModel>
+
+@{
+    int rowNumber = 1;
+    if(ViewBag.CurrentPage!=null) rowNumber = (ViewBag.CurrentPage - 1) * 20 + 1;
+}
+@foreach (var person in Model)
+{
+    <tr>
+        <td>@(rowNumber++)</td>
+        <td>@person.Id</td>
+        <td>@person.FirstName</td>
+        <td>@person.MiddleName</td>
+        <td>@person.LastName</td>
+        <td>@person.PhoneNumber</td>
+        @if (person.State != null)
+        {
+            <td>@person.State,@person.City,@person.Street,#@person.Building,@person.Appartament</td>
+        }
+        else
+        {
+            <td>@person.City,@person.Street, #@person.Building, @person.Appartament</td>
+        }
+        <td>@person.ZipCode</td>
+    </tr>
+}
+
